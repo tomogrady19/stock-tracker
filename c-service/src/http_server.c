@@ -5,6 +5,8 @@
 #include "stockc/http.h"
 #include "stockc/market.h"
 
+static int handle_market_quote(struct mg_connection *conn, void *cbdata);
+
 #ifdef _WIN32
 #include <windows.h>
 #define sleep_ms(ms) Sleep(ms)
@@ -32,7 +34,7 @@ static int health_handler(struct mg_connection *conn, void *cbdata)
               strlen(response),
               response);
 
-    return 200;
+    return 1;
 }
 
 
@@ -57,6 +59,7 @@ int start_http_server(int port)
     }
 
     mg_set_request_handler(ctx, "/health", health_handler, NULL);
+    mg_set_request_handler(ctx, "/api/market/quote", handle_market_quote, 0);
     register_market_routes(ctx);
 
     printf("stockc listening on http://localhost:%d\n", port);
@@ -67,4 +70,44 @@ int start_http_server(int port)
 
     mg_stop(ctx);
     return 0;
+}
+
+static int handle_market_quote(struct mg_connection *conn, void *cbdata)
+{
+    const struct mg_request_info *req = mg_get_request_info(conn);
+
+    char symbol[16] = {0};
+
+    if (req->query_string) {
+        mg_get_var(req->query_string, strlen(req->query_string),
+                "symbol", symbol, sizeof(symbol));
+    }
+
+
+    if (strlen(symbol) == 0) {
+        mg_printf(conn,
+            "HTTP/1.1 400 Bad Request\r\n"
+            "Content-Type: application/json\r\n\r\n"
+            "{\"error\":\"symbol parameter required\"}");
+        return 1;
+    }
+
+    // Stubbed values for now
+    double price = 192.34;
+    double change = -1.12;
+    double change_percent = -0.58;
+
+    mg_printf(conn,
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n\r\n"
+        "{"
+          "\"symbol\":\"%s\","
+          "\"price\":%.2f,"
+          "\"change\":%.2f,"
+          "\"changePercent\":%.2f"
+        "}",
+        symbol, price, change, change_percent
+    );
+
+    return 1;
 }
