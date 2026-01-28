@@ -1,0 +1,6 @@
+[submodule "c-service/third_party/third_party/civetweb"]
+	path = c-service/third_party/third_party/civetweb
+	url = https://github.com/civetweb/civetweb.git
+[submodule "c-service/third_party/third_party/yyjson"]
+	path = c-service/third_party/third_party/yyjson
+	url = https://github.com/ibireme/yyjson.git
