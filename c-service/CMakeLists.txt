@@ -1,17 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(stockc LANGUAGES C)
 
-set(ENABLE_ASAN OFF CACHE BOOL "" FORCE)
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(BUILD_CIVETWEB_EXE OFF CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(third_party/civetweb EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/civetweb)
 add_subdirectory(third_party/yyjson)
+
+find_package(CURL REQUIRED)
 
 add_executable(stockc
     src/main.c
@@ -28,8 +24,5 @@ target_include_directories(stockc PRIVATE
 target_link_libraries(stockc
     civetweb-c-library
     yyjson
+    CURL::libcurl
 )
-
-if (MSVC)
-    target_link_options(stockc PRIVATE /SUBSYSTEM:CONSOLE)
-endif()
