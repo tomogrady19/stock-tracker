@@ -3,6 +3,7 @@
 
 #include "civetweb.h"
 #include "stockc/http.h"
+#include "stockc/market.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -56,6 +57,7 @@ int start_http_server(int port)
     }
 
     mg_set_request_handler(ctx, "/health", health_handler, NULL);
+    register_market_routes(ctx);
 
     printf("stockc listening on http://localhost:%d\n", port);
 

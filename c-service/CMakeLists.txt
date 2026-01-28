@@ -16,6 +16,7 @@ add_subdirectory(third_party/yyjson)
 add_executable(stockc
     src/main.c
     src/http_server.c
+    src/routes/market.c
 )
 
 target_include_directories(stockc PRIVATE
