@@ -14,6 +14,32 @@
 #endif
 
 
+// ---- CORS helpers ----
+
+static void add_cors_headers(struct mg_connection *conn)
+{
+    mg_printf(conn,
+        "Access-Control-Allow-Origin: http://localhost:5173\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
+        "Access-Control-Max-Age: 86400\r\n"
+    );
+}
+
+static int options_handler(struct mg_connection *conn, void *cbdata)
+{
+    mg_printf(conn,
+        "HTTP/1.1 204 No Content\r\n"
+        "Connection: close\r\n"
+    );
+    add_cors_headers(conn);
+    mg_printf(conn, "\r\n");
+    return 1;
+}
+
+
+// ---- Health ----
+
 static int health_handler(struct mg_connection *conn, void *cbdata)
 {
     const char *response =
@@ -23,18 +49,26 @@ static int health_handler(struct mg_connection *conn, void *cbdata)
         "}";
 
     mg_printf(conn,
-              "HTTP/1.1 200 OK\r\n"
-              "Content-Type: application/json\r\n"
-              "Content-Length: %zu\r\n"
-              "Connection: close\r\n"
-              "\r\n"
-              "%s",
-              strlen(response),
-              response);
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: %zu\r\n",
+        strlen(response)
+    );
+
+    add_cors_headers(conn);
+
+    mg_printf(conn,
+        "Connection: close\r\n"
+        "\r\n"
+        "%s",
+        response
+    );
 
     return 1;
 }
 
+
+// ---- Server ----
 
 int start_http_server(int port)
 {
@@ -55,6 +89,9 @@ int start_http_server(int port)
         fprintf(stderr, "Failed to start CivetWeb\n");
         return 1;
     }
+
+    // CORS preflight handler
+    mg_set_request_handler(ctx, "/**", options_handler, NULL);
 
     mg_set_request_handler(ctx, "/health", health_handler, NULL);
     register_market_routes(ctx);

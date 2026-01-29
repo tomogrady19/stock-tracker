@@ -6,6 +6,16 @@
 #include "stockc/alpha_vantage.h"
 
 
+static void add_cors_headers(struct mg_connection *conn)
+{
+    mg_printf(conn,
+        "Access-Control-Allow-Origin: http://localhost:5173\r\n"
+        "Access-Control-Allow-Methods: GET, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
+    );
+}
+
+
 int market_get_quote(const char *symbol, struct stock_quote *out)
 {
     if (!symbol || !out) return -1;
@@ -31,7 +41,11 @@ int handle_market_quote(struct mg_connection *conn, void *cbdata)
     if (strlen(symbol) == 0) {
         mg_printf(conn,
             "HTTP/1.1 400 Bad Request\r\n"
-            "Content-Type: application/json\r\n\r\n"
+            "Content-Type: application/json\r\n"
+        );
+        add_cors_headers(conn);
+        mg_printf(conn,
+            "\r\n"
             "{\"error\":\"symbol parameter required\"}");
         return 1;
     }
@@ -43,7 +57,6 @@ int handle_market_quote(struct mg_connection *conn, void *cbdata)
         int status = 500;
         const char *msg = "failed to fetch quote";
 
-        // Better error mapping for API issues
         if (rc == 2) {
             msg = "missing api key";
         } else if (rc == 7) {
@@ -53,16 +66,25 @@ int handle_market_quote(struct mg_connection *conn, void *cbdata)
 
         mg_printf(conn,
             "HTTP/1.1 %d Error\r\n"
-            "Content-Type: application/json\r\n\r\n"
+            "Content-Type: application/json\r\n",
+            status
+        );
+        add_cors_headers(conn);
+        mg_printf(conn,
+            "\r\n"
             "{\"error\":\"%s\"}",
-            status, msg);
-
+            msg
+        );
         return 1;
     }
 
     mg_printf(conn,
         "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json\r\n\r\n"
+        "Content-Type: application/json\r\n"
+    );
+    add_cors_headers(conn);
+    mg_printf(conn,
+        "\r\n"
         "{"
           "\"symbol\":\"%s\","
           "\"price\":%.2f,"
