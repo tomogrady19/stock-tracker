@@ -1,0 +1,21 @@
+.app {
+  padding: 2rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.stock-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  max-width: 320px;
+  background: #fafafa;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.stock-card h2 {
+  margin-top: 0;
+}
+
+.stock-card p {
+  margin: 0.5rem 0;
+}
