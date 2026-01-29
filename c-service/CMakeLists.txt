@@ -12,6 +12,8 @@ find_package(CURL REQUIRED)
 add_executable(stockc
     src/main.c
     src/http_server.c
+    src/http_client.c
+    src/alpha_vantage.c
     src/routes/market.c
 )
 

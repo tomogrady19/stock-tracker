@@ -3,20 +3,14 @@
 
 #include "civetweb.h"
 #include "stockc/market.h"
+#include "stockc/alpha_vantage.h"
 
 
 int market_get_quote(const char *symbol, struct stock_quote *out)
 {
     if (!symbol || !out) return -1;
 
-    strncpy(out->symbol, symbol, sizeof(out->symbol) - 1);
-
-    // Stub values (fake for now)
-    out->price = 123.45;
-    out->change = 1.23;
-    out->change_percent = 1.01;
-
-    return 0;
+    return alpha_vantage_get_quote(symbol, out);
 }
 
 
@@ -44,11 +38,25 @@ int handle_market_quote(struct mg_connection *conn, void *cbdata)
 
     struct stock_quote q;
 
-    if (market_get_quote(symbol, &q) != 0) {
+    int rc = market_get_quote(symbol, &q);
+    if (rc != 0) {
+        int status = 500;
+        const char *msg = "failed to fetch quote";
+
+        // Better error mapping for API issues
+        if (rc == 2) {
+            msg = "missing api key";
+        } else if (rc == 7) {
+            status = 429;
+            msg = "rate limit exceeded";
+        }
+
         mg_printf(conn,
-            "HTTP/1.1 500 Internal Server Error\r\n"
+            "HTTP/1.1 %d Error\r\n"
             "Content-Type: application/json\r\n\r\n"
-            "{\"error\":\"failed to fetch quote\"}");
+            "{\"error\":\"%s\"}",
+            status, msg);
+
         return 1;
     }
 
