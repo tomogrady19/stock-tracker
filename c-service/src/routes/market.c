@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "civetweb.h"
 #include "stockc/market.h"
 #include "stockc/alpha_vantage.h"
 
+#define HISTORY_CACHE_TTL 60  // seconds
+
+
+// ----- CORS -----
 
 static void add_cors_headers(struct mg_connection *conn)
 {
@@ -16,7 +21,7 @@ static void add_cors_headers(struct mg_connection *conn)
 }
 
 
-// ----- Quote -----
+// ----- Quote logic -----
 
 int market_get_quote(const char *symbol, struct stock_quote *out)
 {
@@ -27,7 +32,6 @@ int market_get_quote(const char *symbol, struct stock_quote *out)
 static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 {
     const struct mg_request_info *req = mg_get_request_info(conn);
-
     char symbol[16] = {0};
 
     if (req->query_string) {
@@ -44,9 +48,7 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
             "Content-Type: application/json\r\n"
         );
         add_cors_headers(conn);
-        mg_printf(conn,
-            "\r\n"
-            "{\"error\":\"symbol parameter required\"}");
+        mg_printf(conn, "\r\n{\"error\":\"symbol parameter required\"}");
         return 1;
     }
 
@@ -70,11 +72,7 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
             status
         );
         add_cors_headers(conn);
-        mg_printf(conn,
-            "\r\n"
-            "{\"error\":\"%s\"}",
-            msg
-        );
+        mg_printf(conn, "\r\n{\"error\":\"%s\"}", msg);
         return 1;
     }
 
@@ -98,14 +96,31 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 }
 
 
-// ----- History (stubbed for now) -----
-// Fixed range: last 5 trading days (static sample data).
-// Next step will replace this with Alpha Vantage TIME_SERIES_DAILY parsing.
+// ----- History cache -----
+
+struct history_cache_entry {
+    char symbol[16];
+    time_t fetched_at;
+    char json[2048];
+};
+
+static struct history_cache_entry history_cache = {0};
+
+static int history_cache_valid(const char *symbol)
+{
+    if (strcmp(history_cache.symbol, symbol) != 0)
+        return 0;
+
+    time_t now = time(NULL);
+    return difftime(now, history_cache.fetched_at) < HISTORY_CACHE_TTL;
+}
+
+
+// ----- History handler (cached stub) -----
 
 static int handle_market_history(struct mg_connection *conn, void *cbdata)
 {
     const struct mg_request_info *req = mg_get_request_info(conn);
-
     char symbol[16] = {0};
 
     if (req->query_string) {
@@ -122,21 +137,26 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
             "Content-Type: application/json\r\n"
         );
         add_cors_headers(conn);
-        mg_printf(conn,
-            "\r\n"
-            "{\"error\":\"symbol parameter required\"}");
+        mg_printf(conn, "\r\n{\"error\":\"symbol parameter required\"}");
         return 1;
     }
 
-    // Stub data (dates/values are just placeholders).
-    // Shape is what matters for now.
-    mg_printf(conn,
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json\r\n"
-    );
-    add_cors_headers(conn);
-    mg_printf(conn,
-        "\r\n"
+    // Serve cached response if valid
+    if (history_cache_valid(symbol)) {
+        mg_printf(conn,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+        );
+        add_cors_headers(conn);
+        mg_printf(conn, "\r\n%s", history_cache.json);
+        return 1;
+    }
+
+    // Populate cache (stub data for now)
+    snprintf(history_cache.symbol, sizeof(history_cache.symbol), "%s", symbol);
+    history_cache.fetched_at = time(NULL);
+
+    snprintf(history_cache.json, sizeof(history_cache.json),
         "{"
           "\"symbol\":\"%s\","
           "\"series\":["
@@ -150,11 +170,18 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         symbol
     );
 
+    mg_printf(conn,
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n"
+    );
+    add_cors_headers(conn);
+    mg_printf(conn, "\r\n%s", history_cache.json);
+
     return 1;
 }
 
 
-// ----- Route registration -----
+// ----- Routes -----
 
 void register_market_routes(struct mg_context *ctx)
 {
