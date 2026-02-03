@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 
 #include "civetweb.h"
 #include "stockc/market.h"
 #include "stockc/alpha_vantage.h"
-
-#define HISTORY_CACHE_TTL 60  // seconds
+#include "../cache/history_cache.h"
 
 
 // ----- CORS -----
@@ -96,27 +94,7 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 }
 
 
-// ----- History cache -----
-
-struct history_cache_entry {
-    char symbol[16];
-    time_t fetched_at;
-    char json[8192];
-};
-
-static struct history_cache_entry history_cache = {0};
-
-static int history_cache_valid(const char *symbol)
-{
-    if (strcmp(history_cache.symbol, symbol) != 0)
-        return 0;
-
-    time_t now = time(NULL);
-    return difftime(now, history_cache.fetched_at) < HISTORY_CACHE_TTL;
-}
-
-
-// ----- History handler (cached REAL data) -----
+// ----- History handler (using cache module) -----
 
 static int handle_market_history(struct mg_connection *conn, void *cbdata)
 {
@@ -141,22 +119,25 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    // Serve cached response if valid
-    if (history_cache_valid(symbol)) {
+    // ----- Cache hit -----
+    const char *cached = history_cache_get(symbol);
+    if (cached) {
         mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: application/json\r\n"
         );
         add_cors_headers(conn);
-        mg_printf(conn, "\r\n%s", history_cache.json);
+        mg_printf(conn, "\r\n%s", cached);
         return 1;
     }
 
-    // Fetch real Alpha Vantage daily history
+    // ----- Cache miss → fetch real data -----
+    char json[8192];
+
     int rc = alpha_vantage_get_daily_history_json(
         symbol,
-        history_cache.json,
-        sizeof(history_cache.json)
+        json,
+        sizeof(json)
     );
 
     if (rc != 0) {
@@ -165,20 +146,18 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
             "Content-Type: application/json\r\n"
         );
         add_cors_headers(conn);
-        mg_printf(conn,
-            "\r\n{\"error\":\"failed to fetch history\"}");
+        mg_printf(conn, "\r\n{\"error\":\"failed to fetch history\"}");
         return 1;
     }
 
-    strncpy(history_cache.symbol, symbol, sizeof(history_cache.symbol) - 1);
-    history_cache.fetched_at = time(NULL);
+    history_cache_set(symbol, json);
 
     mg_printf(conn,
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/json\r\n"
     );
     add_cors_headers(conn);
-    mg_printf(conn, "\r\n%s", history_cache.json);
+    mg_printf(conn, "\r\n%s", json);
 
     return 1;
 }

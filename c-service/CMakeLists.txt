@@ -15,6 +15,7 @@ add_executable(stockc
     src/http_client.c
     src/alpha_vantage.c
     src/routes/market.c
+    src/cache/history_cache.c
 )
 
 target_include_directories(stockc PRIVATE
