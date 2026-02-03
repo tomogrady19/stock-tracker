@@ -101,7 +101,7 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 struct history_cache_entry {
     char symbol[16];
     time_t fetched_at;
-    char json[2048];
+    char json[8192];
 };
 
 static struct history_cache_entry history_cache = {0};
@@ -116,7 +116,7 @@ static int history_cache_valid(const char *symbol)
 }
 
 
-// ----- History handler (cached stub) -----
+// ----- History handler (cached REAL data) -----
 
 static int handle_market_history(struct mg_connection *conn, void *cbdata)
 {
@@ -152,23 +152,26 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    // Populate cache (stub data for now)
-    snprintf(history_cache.symbol, sizeof(history_cache.symbol), "%s", symbol);
-    history_cache.fetched_at = time(NULL);
-
-    snprintf(history_cache.json, sizeof(history_cache.json),
-        "{"
-          "\"symbol\":\"%s\","
-          "\"series\":["
-            "{\"date\":\"2026-01-27\",\"price\":252.10},"
-            "{\"date\":\"2026-01-28\",\"price\":258.27},"
-            "{\"date\":\"2026-01-29\",\"price\":256.44},"
-            "{\"date\":\"2026-01-30\",\"price\":260.05},"
-            "{\"date\":\"2026-02-02\",\"price\":259.40}"
-          "]"
-        "}",
-        symbol
+    // Fetch real Alpha Vantage daily history
+    int rc = alpha_vantage_get_daily_history_json(
+        symbol,
+        history_cache.json,
+        sizeof(history_cache.json)
     );
+
+    if (rc != 0) {
+        mg_printf(conn,
+            "HTTP/1.1 500 Internal Server Error\r\n"
+            "Content-Type: application/json\r\n"
+        );
+        add_cors_headers(conn);
+        mg_printf(conn,
+            "\r\n{\"error\":\"failed to fetch history\"}");
+        return 1;
+    }
+
+    strncpy(history_cache.symbol, symbol, sizeof(history_cache.symbol) - 1);
+    history_cache.fetched_at = time(NULL);
 
     mg_printf(conn,
         "HTTP/1.1 200 OK\r\n"
