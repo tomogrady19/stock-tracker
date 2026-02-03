@@ -3,6 +3,7 @@ import {
   fetchStockQuote,
   fetchStockHistory,
 } from "../services/stockApi";
+import StockChart from "./stockChart";
 
 export default function StockQuote({ symbol }) {
   const [quote, setQuote] = useState(null);
@@ -43,18 +44,8 @@ export default function StockQuote({ symbol }) {
         {quote.changePercent.toFixed(2)}%)
       </p>
 
-      <h3>Raw history data</h3>
-      <pre
-        style={{
-          maxHeight: "200px",
-          overflow: "auto",
-          background: "#eee",
-          padding: "0.5rem",
-          fontSize: "0.8rem",
-        }}
-      >
-        {JSON.stringify(history, null, 2)}
-      </pre>
+      <h3>Price history</h3>
+      <StockChart series={history.series} />
     </div>
   );
 }
