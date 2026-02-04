@@ -34,7 +34,7 @@ static int parse_percent(const char *s, double *out)
 
 
 // ------------------------------------------------------------
-// Quote (EXISTING FUNCTION — RESTORED)
+// Quote
 // ------------------------------------------------------------
 
 int alpha_vantage_get_quote(const char *symbol, struct stock_quote *out)
@@ -67,6 +67,15 @@ int alpha_vantage_get_quote(const char *symbol, struct stock_quote *out)
         return -4;
 
     yyjson_val *root = yyjson_doc_get_root(doc);
+
+    // Alpha Vantage error / rate-limit responses
+    if (yyjson_obj_get(root, "Note") ||
+        yyjson_obj_get(root, "Error Message") ||
+        yyjson_obj_get(root, "Information")) {
+        yyjson_doc_free(doc);
+        return -100; // upstream temporary failure
+    }
+
     yyjson_val *quote = yyjson_obj_get(root, "Global Quote");
 
     if (!quote) {
@@ -97,7 +106,7 @@ int alpha_vantage_get_quote(const char *symbol, struct stock_quote *out)
 
 
 // ------------------------------------------------------------
-// Daily history (NEW FUNCTION)
+// Daily history
 // ------------------------------------------------------------
 
 int alpha_vantage_get_daily_history_json(
@@ -134,6 +143,15 @@ int alpha_vantage_get_daily_history_json(
         return -4;
 
     yyjson_val *root = yyjson_doc_get_root(doc);
+
+    // Alpha Vantage error / rate-limit responses
+    if (yyjson_obj_get(root, "Note") ||
+        yyjson_obj_get(root, "Error Message") ||
+        yyjson_obj_get(root, "Information")) {
+        yyjson_doc_free(doc);
+        return -100; // upstream temporary failure
+    }
+
     yyjson_val *series =
         yyjson_obj_get(root, "Time Series (Daily)");
 
