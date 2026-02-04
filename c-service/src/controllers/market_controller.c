@@ -2,6 +2,7 @@
 
 #include "market_controller.h"
 #include "../services/market_service.h"
+#include "../http/cors.h"
 #include "stockc/market.h"
 
 
@@ -11,15 +12,16 @@ int market_quote_controller(struct mg_connection *conn,
     struct stock_quote q;
 
     if (market_service_get_quote(symbol, &q) != 0) {
-        q.price = 0.0;
-        q.change = 0.0;
-        q.change_percent = 0.0;
+        memset(&q, 0, sizeof(q));
         strncpy(q.symbol, symbol, sizeof(q.symbol) - 1);
     }
 
     mg_printf(conn,
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/json\r\n"
+    );
+    add_cors_headers(conn);
+    mg_printf(conn,
         "\r\n"
         "{"
           "\"symbol\":\"%s\","
@@ -44,6 +46,9 @@ int market_history_controller(struct mg_connection *conn,
     mg_printf(conn,
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/json\r\n"
+    );
+    add_cors_headers(conn);
+    mg_printf(conn,
         "\r\n%s",
         history
     );

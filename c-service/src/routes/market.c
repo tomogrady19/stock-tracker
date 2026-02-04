@@ -28,7 +28,7 @@ static int extract_symbol_param(const struct mg_request_info *req,
 
 
 // ============================================================
-// Route handlers (thin glue)
+// Route handlers (HTTP glue only)
 // ============================================================
 
 static int handle_market_quote(struct mg_connection *conn, void *cbdata)
@@ -44,7 +44,6 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    add_cors_headers(conn);
     return market_quote_controller(conn, symbol);
 }
 
@@ -61,7 +60,6 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    add_cors_headers(conn);
     return market_history_controller(conn, symbol);
 }
 

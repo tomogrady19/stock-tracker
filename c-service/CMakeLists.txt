@@ -16,6 +16,10 @@ add_executable(stockc
     src/alpha_vantage.c
     src/routes/market.c
     src/cache/history_cache.c
+    src/controllers/market_controller.c
+    src/services/market_service.c
+    src/http/cors.c
+    src/http/responses.c
 )
 
 target_include_directories(stockc PRIVATE
