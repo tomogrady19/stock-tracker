@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "civetweb.h"
 #include "stockc/market.h"
-#include "stockc/alpha_vantage.h"
 #include "../cache/history_cache.h"
 
 
@@ -19,17 +19,51 @@ static void add_cors_headers(struct mg_connection *conn)
 }
 
 
-// ----- Quote logic -----
+// ----- Helpers -----
 
-int market_get_quote(const char *symbol, struct stock_quote *out)
+static int extract_latest_quote(
+    const char *history_json,
+    struct stock_quote *out
+)
 {
-    if (!symbol || !out) return -1;
-    return alpha_vantage_get_quote(symbol, out);
+    // VERY simple parsing:
+    // We assume the first two entries are the most recent days
+    const char *p = strstr(history_json, "\"price\":");
+    if (!p) return -1;
+
+    double latest = atof(p + 8);
+
+    const char *p2 = strstr(p + 8, "\"price\":");
+    if (!p2) return -1;
+
+    double previous = atof(p2 + 8);
+
+    out->price = latest;
+    out->change = latest - previous;
+    out->change_percent =
+        (out->change / previous) * 100.0;
+
+    return 0;
 }
+
+
+// ----- Quote handler (derived from history) -----
 
 static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 {
     const struct mg_request_info *req = mg_get_request_info(conn);
+
+    // CORS preflight
+    if (strcmp(req->request_method, "OPTIONS") == 0) {
+        mg_printf(conn,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Length: 0\r\n"
+        );
+        add_cors_headers(conn);
+        mg_printf(conn, "\r\n");
+        return 1;
+    }
+
     char symbol[16] = {0};
 
     if (req->query_string) {
@@ -50,27 +84,43 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    struct stock_quote q;
-    int rc = market_get_quote(symbol, &q);
+    const char *history = history_cache_get(symbol);
+    if (!history) {
+        // Fetch history on-demand to populate cache
+        char json[8192];
 
-    if (rc != 0) {
-        int status = 500;
-        const char *msg = "failed to fetch quote";
+        int rc = alpha_vantage_get_daily_history_json(
+            symbol,
+            json,
+            sizeof(json)
+        );
 
-        if (rc == 2) {
-            msg = "missing api key";
-        } else if (rc == 7) {
-            status = 429;
-            msg = "rate limit exceeded";
+        if (rc != 0) {
+            mg_printf(conn,
+                "HTTP/1.1 503 Service Unavailable\r\n"
+                "Content-Type: application/json\r\n"
+            );
+            add_cors_headers(conn);
+            mg_printf(conn,
+                "\r\n{\"error\":\"failed to fetch history\"}");
+            return 1;
         }
 
+        history_cache_set(symbol, json);
+        history = history_cache_get(symbol);
+    }
+
+    struct stock_quote q;
+    strncpy(q.symbol, symbol, sizeof(q.symbol) - 1);
+
+    if (extract_latest_quote(history, &q) != 0) {
         mg_printf(conn,
-            "HTTP/1.1 %d Error\r\n"
-            "Content-Type: application/json\r\n",
-            status
+            "HTTP/1.1 500 Internal Server Error\r\n"
+            "Content-Type: application/json\r\n"
         );
         add_cors_headers(conn);
-        mg_printf(conn, "\r\n{\"error\":\"%s\"}", msg);
+        mg_printf(conn,
+            "\r\n{\"error\":\"failed to derive quote\"}");
         return 1;
     }
 
@@ -87,18 +137,33 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
           "\"change\":%.2f,"
           "\"changePercent\":%.2f"
         "}",
-        q.symbol, q.price, q.change, q.change_percent
+        q.symbol,
+        q.price,
+        q.change,
+        q.change_percent
     );
 
     return 1;
 }
 
 
-// ----- History handler (using cache module) -----
+// ----- History handler -----
 
 static int handle_market_history(struct mg_connection *conn, void *cbdata)
 {
     const struct mg_request_info *req = mg_get_request_info(conn);
+
+    // CORS preflight
+    if (strcmp(req->request_method, "OPTIONS") == 0) {
+        mg_printf(conn,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Length: 0\r\n"
+        );
+        add_cors_headers(conn);
+        mg_printf(conn, "\r\n");
+        return 1;
+    }
+
     char symbol[16] = {0};
 
     if (req->query_string) {
@@ -119,7 +184,6 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    // ----- Cache hit -----
     const char *cached = history_cache_get(symbol);
     if (cached) {
         mg_printf(conn,
@@ -131,7 +195,7 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    // ----- Cache miss → fetch real data -----
+    // Cache miss → fetch history
     char json[8192];
 
     int rc = alpha_vantage_get_daily_history_json(
@@ -141,14 +205,29 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
     );
 
     if (rc != 0) {
+        // Alpha Vantage failed — serve stale cache if available
+        const char *stale = history_cache_get(symbol);
+        if (stale) {
+            mg_printf(conn,
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: application/json\r\n"
+            );
+            add_cors_headers(conn);
+            mg_printf(conn, "\r\n%s", stale);
+            return 1;
+        }
+
+        // No cached data at all — real failure
         mg_printf(conn,
-            "HTTP/1.1 500 Internal Server Error\r\n"
+            "HTTP/1.1 503 Service Unavailable\r\n"
             "Content-Type: application/json\r\n"
         );
         add_cors_headers(conn);
-        mg_printf(conn, "\r\n{\"error\":\"failed to fetch history\"}");
+        mg_printf(conn,
+            "\r\n{\"error\":\"failed to fetch history\"}");
         return 1;
     }
+
 
     history_cache_set(symbol, json);
 

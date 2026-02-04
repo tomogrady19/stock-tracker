@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   fetchStockQuote,
   fetchStockHistory,
@@ -9,11 +9,12 @@ export default function StockQuote({ symbol }) {
   const [quote, setQuote] = useState(null);
   const [history, setHistory] = useState(null);
   const [error, setError] = useState(null);
-  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
+    // reset state when symbol changes
+    setQuote(null);
+    setHistory(null);
+    setError(null);
 
     Promise.all([
       fetchStockQuote(symbol),
