@@ -23,7 +23,14 @@ export default function StockChart({ series }) {
     // Expecting series like:
     // [{ date: "2026-01-27", price: 252.10 }, ...]
 
-    const labels = series.map((point) => point.date);
+    const labels = series.map((point) => {
+        const d = new Date(point.date);
+        return d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+        });
+    });
+
     const prices = series.map((point) => point.price);
 
     const data = {
@@ -44,12 +51,21 @@ export default function StockChart({ series }) {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-            display: true,
+                display: true,
             },
         },
         scales: {
+            x: {
+                ticks: {
+                    maxTicksLimit: 8,
+                },
+            },
             y: {
-            beginAtZero: false,
+                beginAtZero: false,
+                title: {
+                    display: true,
+                    text: "Price ($)",
+                },
             },
         },
     };
