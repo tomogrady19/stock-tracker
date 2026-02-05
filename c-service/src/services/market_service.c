@@ -62,14 +62,12 @@ market_service_get_history(const char *symbol)
     result.source = MARKET_SOURCE_DEMO;
     result.fetched_at = 0;
 
-    time_t now = time(NULL);
-
-    // 1) Try cache first
+    // 1) Cache hit
     const char *cached = history_cache_get(symbol);
     if (cached) {
         result.json = cached;
         result.source = MARKET_SOURCE_CACHE;
-        result.fetched_at = now;   // Approximate (we don’t expose cache timestamp yet)
+        result.fetched_at = history_cache_get_fetched_at(symbol);
         return result;
     }
 
@@ -87,23 +85,23 @@ market_service_get_history(const char *symbol)
 
         result.json = history_cache_get(symbol);
         result.source = MARKET_SOURCE_LIVE;
-        result.fetched_at = now;
+        result.fetched_at = history_cache_get_fetched_at(symbol);
         return result;
     }
 
-    // 3) Try stale cache (rare path)
+    // 3) Stale cache fallback
     const char *stale = history_cache_get(symbol);
     if (stale) {
         result.json = stale;
         result.source = MARKET_SOURCE_CACHE;
-        result.fetched_at = now;
+        result.fetched_at = history_cache_get_fetched_at(symbol);
         return result;
     }
 
-    // 4) Final fallback: demo data
+    // 4) Dev fallback
     result.json = dev_fallback_history;
     result.source = MARKET_SOURCE_DEMO;
-    result.fetched_at = now;
+    result.fetched_at = time(NULL);
 
     return result;
 }

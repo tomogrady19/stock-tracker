@@ -32,6 +32,12 @@ int history_cache_is_valid(const char *symbol);
 const char *history_cache_get(const char *symbol);
 
 /*
+ * NEW: Get the timestamp of when the cache was last fetched.
+ * Returns 0 if not present.
+ */
+time_t history_cache_get_fetched_at(const char *symbol);
+
+/*
  * Store JSON in cache for `symbol` with current timestamp.
  */
 void history_cache_set(const char *symbol, const char *json);
