@@ -52,43 +52,47 @@ export default function StockQuote({ symbol }) {
   }
 
   return (
-    <div className="stock-card">
-      <h2>{quote.symbol}</h2>
+    <div className="stock-card" style={{ display: "flex", gap: "20px" }}>
 
-      {source === "demo" && (
-        <div
-          style={{
-            backgroundColor: "#fff3cd",
-            color: "#856404",
-            padding: "10px",
-            marginBottom: "10px",
-            borderRadius: "6px",
-            fontSize: "0.9rem",
-          }}
-        >
-          ⚠ Live market data unavailable — showing demo data
-        </div>
-      )}
+      <div style={{ flex: 2 }}>
+        <StockChart series={history.series} />
+      </div>
 
-      {source === "cache" && freshnessText && (
-        <div
-          style={{
-            color: "#666",
-            fontSize: "0.85rem",
-            marginBottom: "10px",
-          }}
-        >
-          {freshnessText}
-        </div>
-      )}
+      {/* //TODO move the styles below to a css file */}
+      <div style={{ flex: 1 }}>
+        <h2>{quote.symbol}</h2>
+        {source === "demo" && (
+          <div
+            style={{
+              backgroundColor: "#fff3cd",
+              color: "#856404",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "6px",
+              fontSize: "0.9rem",
+            }}
+          >
+            ⚠ Live market data unavailable — showing demo data
+          </div>
+        )}
 
-      <p>Price: ${quote.price.toFixed(2)}</p>
-      <p>
-        Change: {quote.change.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
-      </p>
+        {source === "cache" && freshnessText && (
+          <div
+            style={{
+              color: "#666",
+              fontSize: "0.85rem",
+              marginBottom: "10px",
+            }}
+          >
+            {freshnessText}
+          </div>
+        )}
 
-      <h3>Price history</h3>
-      <StockChart series={history.series} />
+        <p>Price: ${quote.price.toFixed(2)}</p>
+        <p>
+          Change: {quote.change.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
+        </p>
+      </div>
     </div>
   );
 }

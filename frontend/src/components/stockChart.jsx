@@ -41,6 +41,7 @@ export default function StockChart({ series }) {
 
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
             display: true,
@@ -53,5 +54,9 @@ export default function StockChart({ series }) {
         },
     };
 
-    return <Line data={data} options={options} />;
+    return (
+        <div style={{ height: "400px" }}>
+            <Line data={data} options={options} />
+        </div>
+    );
 }
