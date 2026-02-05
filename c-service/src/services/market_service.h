@@ -1,22 +1,35 @@
 #ifndef STOCKC_MARKET_SERVICE_H
 #define STOCKC_MARKET_SERVICE_H
 
-/*
- * Market service layer.
- * Encapsulates cache usage, Alpha Vantage calls,
- * and fallback behaviour.
- */
+#include <time.h>
+#include "stockc/market.h"
 
 /*
- * Returns a pointer to a JSON history payload.
- * The returned pointer is valid for the lifetime
- * of the request.
+ * Where the history data came from
  */
-const char *market_service_get_history(const char *symbol);
+enum market_data_source {
+    MARKET_SOURCE_LIVE,
+    MARKET_SOURCE_CACHE,
+    MARKET_SOURCE_DEMO
+};
 
 /*
- * Derives a stock quote from history data.
- * Returns 0 on success, non-zero on failure.
+ * Result object returned by the history service
+ */
+struct market_history_result {
+    const char *json;           // history JSON payload
+    enum market_data_source source;
+    time_t fetched_at;          // when the data was originally fetched
+};
+
+/*
+ * Returns history + metadata
+ */
+struct market_history_result
+market_service_get_history(const char *symbol);
+
+/*
+ * Quote logic stays the same externally
  */
 int market_service_get_quote(const char *symbol,
                              struct stock_quote *out);

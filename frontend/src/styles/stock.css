@@ -10,6 +10,7 @@
   max-width: 320px;
   background: #fafafa;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  color: #222;
 }
 
 .stock-card h2 {

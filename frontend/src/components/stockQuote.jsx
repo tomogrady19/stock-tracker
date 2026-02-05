@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  fetchStockQuote,
-  fetchStockHistory,
-} from "../services/stockApi";
+import { fetchStockQuote, fetchStockHistory } from "../services/stockApi";
 import StockChart from "./stockChart";
 
 export default function StockQuote({ symbol }) {
@@ -16,10 +13,7 @@ export default function StockQuote({ symbol }) {
     setHistory(null);
     setError(null);
 
-    Promise.all([
-      fetchStockQuote(symbol),
-      fetchStockHistory(symbol),
-    ])
+    Promise.all([fetchStockQuote(symbol), fetchStockHistory(symbol)])
       .then(([quoteData, historyData]) => {
         setQuote(quoteData);
         setHistory(historyData);
@@ -35,14 +29,62 @@ export default function StockQuote({ symbol }) {
     return <p>Loading...</p>;
   }
 
+  const source = history.source;
+  const fetchedAt = history.fetchedAt;
+
+  let freshnessText = null;
+
+  if (source === "cache" && fetchedAt) {
+    const ageSeconds = Math.floor(Date.now() / 1000 - fetchedAt);
+    const ageMinutes = Math.floor(ageSeconds / 60);
+    const ageHours = Math.floor(ageMinutes / 60);
+
+    if (ageMinutes < 1) {
+      freshnessText = "Last updated just now";
+    } else if (ageMinutes < 60) {
+      freshnessText = `Last updated ${ageMinutes} minute${ageMinutes === 1 ? "" : "s"} ago`;
+    } else if (ageHours < 24) {
+      freshnessText = `Last updated ${ageHours} hour${ageHours === 1 ? "" : "s"} ago`;
+    } else {
+      const ageDays = Math.floor(ageHours / 24);
+      freshnessText = `Last updated ${ageDays} day${ageDays === 1 ? "" : "s"} ago`;
+    }
+  }
+
   return (
     <div className="stock-card">
       <h2>{quote.symbol}</h2>
 
+      {source === "demo" && (
+        <div
+          style={{
+            backgroundColor: "#fff3cd",
+            color: "#856404",
+            padding: "10px",
+            marginBottom: "10px",
+            borderRadius: "6px",
+            fontSize: "0.9rem",
+          }}
+        >
+          ⚠ Live market data unavailable — showing demo data
+        </div>
+      )}
+
+      {source === "cache" && freshnessText && (
+        <div
+          style={{
+            color: "#666",
+            fontSize: "0.85rem",
+            marginBottom: "10px",
+          }}
+        >
+          {freshnessText}
+        </div>
+      )}
+
       <p>Price: ${quote.price.toFixed(2)}</p>
       <p>
-        Change: {quote.change.toFixed(2)} (
-        {quote.changePercent.toFixed(2)}%)
+        Change: {quote.change.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
       </p>
 
       <h3>Price history</h3>
