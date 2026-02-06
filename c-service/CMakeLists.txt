@@ -19,6 +19,7 @@ add_executable(stockc
     src/controllers/market_controller.c
     src/services/market_service.c
     src/services/market_metrics.c
+    src/services/market_history_json.c
     src/http/cors.c
     src/http/responses.c
 )
