@@ -40,14 +40,14 @@ export default function StockQuote({ symbol }) {
     const ageHours = Math.floor(ageMinutes / 60);
 
     if (ageMinutes < 1) {
-      freshnessText = "Last updated just now";
+      freshnessText = "As of just now";
     } else if (ageMinutes < 60) {
-      freshnessText = `Last updated ${ageMinutes} minute${ageMinutes === 1 ? "" : "s"} ago`;
+      freshnessText = `As of ${ageMinutes} minute${ageMinutes === 1 ? "" : "s"} ago`;
     } else if (ageHours < 24) {
-      freshnessText = `Last updated ${ageHours} hour${ageHours === 1 ? "" : "s"} ago`;
+      freshnessText = `As of ${ageHours} hour${ageHours === 1 ? "" : "s"} ago`;
     } else {
       const ageDays = Math.floor(ageHours / 24);
-      freshnessText = `Last updated ${ageDays} day${ageDays === 1 ? "" : "s"} ago`;
+      freshnessText = `As of ${ageDays} day${ageDays === 1 ? "" : "s"} ago`;
     }
   }
 
