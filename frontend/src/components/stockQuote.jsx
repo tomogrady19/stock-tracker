@@ -31,6 +31,7 @@ export default function StockQuote({ symbol }) {
 
   const source = history.source;
   const fetchedAt = history.fetchedAt;
+  const metrics = history.metrics ?? null;
 
   let freshnessText = null;
 
@@ -53,18 +54,17 @@ export default function StockQuote({ symbol }) {
 
   return (
     <div className="stock-card" style={{ display: "flex", gap: "20px" }}>
-
       <div style={{ flex: 2 }}>
         <StockChart
           series={history.series}
           symbol={quote.symbol}
         />
-
       </div>
 
       {/* //TODO move the styles below to a css file */}
       <div style={{ flex: 1 }}>
         <h2>{quote.symbol}</h2>
+
         {source === "demo" && (
           <div
             style={{
@@ -96,6 +96,35 @@ export default function StockQuote({ symbol }) {
         <p>
           Change: {quote.change.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
         </p>
+
+        {/* ================= Metrics ================= */}
+        {metrics && (
+          <div style={{ marginTop: "14px", fontSize: "0.95rem" }}>
+            <div title="Risk-adjusted return (rf = 0%)">
+              Sharpe:{" "}
+              {metrics.sharpe !== 0
+                ? metrics.sharpe.toFixed(2)
+                : "—"}
+            </div>
+
+            <div title="Downside-risk-adjusted return (rf = 0%)">
+              Sortino:{" "}
+              {metrics.sortino !== 0
+                ? metrics.sortino.toFixed(2)
+                : "—"}
+            </div>
+
+            <div title="Worst peak-to-trough loss">
+              Max Drawdown:{" "}
+              {(metrics.maxDrawdown * 100).toFixed(1)}%
+            </div>
+
+            <div title="Compound annual growth rate over this period">
+              CAGR:{" "}
+              {(metrics.cagr * 100).toFixed(1)}%
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
