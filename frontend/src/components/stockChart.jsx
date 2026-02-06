@@ -23,7 +23,9 @@ export default function StockChart({ series }) {
     // Expecting series like:
     // [{ date: "2026-01-27", price: 252.10 }, ...]
 
-    const labels = series.map((point) => {
+    const ordered = [...series].reverse(); // Ensure chronological order (oldest first)
+
+    const labels = ordered.map((point) => {
         const d = new Date(point.date);
         return d.toLocaleDateString("en-US", {
             month: "short",
@@ -31,7 +33,7 @@ export default function StockChart({ series }) {
         });
     });
 
-    const prices = series.map((point) => point.price);
+    const prices = ordered.map((point) => point.price);
 
     const data = {
         labels,
