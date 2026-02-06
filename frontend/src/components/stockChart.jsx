@@ -19,7 +19,7 @@ ChartJS.register(
     Legend
 );
 
-export default function StockChart({ series }) {
+export default function StockChart({ series, symbol }) {
     // Expecting series like:
     // [{ date: "2026-01-27", price: 252.10 }, ...]
 
@@ -39,7 +39,7 @@ export default function StockChart({ series }) {
         labels,
         datasets: [
             {
-            label: "Price",
+            label: symbol,
             data: prices,
             borderColor: "rgb(75, 192, 192)",
             backgroundColor: "rgba(75, 192, 192, 0.2)",

@@ -55,7 +55,11 @@ export default function StockQuote({ symbol }) {
     <div className="stock-card" style={{ display: "flex", gap: "20px" }}>
 
       <div style={{ flex: 2 }}>
-        <StockChart series={history.series} />
+        <StockChart
+          series={history.series}
+          symbol={quote.symbol}
+        />
+
       </div>
 
       {/* //TODO move the styles below to a css file */}
