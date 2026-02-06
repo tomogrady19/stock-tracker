@@ -157,6 +157,7 @@ int alpha_vantage_get_daily_history_json(
         "https://www.alphavantage.co/query"
         "?function=TIME_SERIES_DAILY" //ADJUSTED is premium only, but we only need close price so regular is fine
         "&symbol=%s"
+        "&outputsize=full"
         "&apikey=%s",
         symbol, api_key
     );
