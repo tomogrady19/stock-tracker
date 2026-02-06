@@ -76,7 +76,7 @@ export default function StockQuote({ symbol }) {
               fontSize: "0.9rem",
             }}
           >
-            ⚠ Live market data unavailable — showing demo data
+            ⚠ Live market data unavailable. Showing demo data.
           </div>
         )}
 

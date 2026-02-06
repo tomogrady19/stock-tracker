@@ -7,7 +7,7 @@
 
 #include "yyjson.h"
 
-#define HISTORY_DAYS 30
+#define HISTORY_DAYS 252
 
 
 // ------------------------------------------------------------
@@ -126,7 +126,7 @@ int alpha_vantage_get_daily_history_json(
     snprintf(
         url, sizeof(url),
         "https://www.alphavantage.co/query"
-        "?function=TIME_SERIES_DAILY"
+        "?function=TIME_SERIES_DAILY_ADJUSTED"
         "&symbol=%s"
         "&apikey=%s",
         symbol, api_key
@@ -182,7 +182,7 @@ int alpha_vantage_get_daily_history_json(
     {
         const char *date = yyjson_get_str(key);
         yyjson_val *close =
-            yyjson_obj_get(val, "4. close");
+            yyjson_obj_get(val, "5. adjusted close");
 
         if (!date || !close)
             continue;
