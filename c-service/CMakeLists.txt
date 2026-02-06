@@ -18,6 +18,7 @@ add_executable(stockc
     src/cache/history_cache.c
     src/controllers/market_controller.c
     src/services/market_service.c
+    src/services/market_metrics.c
     src/http/cors.c
     src/http/responses.c
 )
