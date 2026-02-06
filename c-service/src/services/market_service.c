@@ -300,10 +300,11 @@ market_service_get_history(const char *symbol)
         result.fetched_at = history_cache_get_fetched_at(symbol);
     } else {
         // 2) Try live fetch
-        char json[8192];
+        char json[65536]; // large enough buffer for 252 trading days + meta data
         int rc = alpha_vantage_get_daily_history_json(
             symbol, json, sizeof(json)
         );
+        printf("alpha_vantage rc=%d\n", rc); // temporary logging
 
         if (rc == 0) {
             history_cache_set(symbol, json);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchStockQuote, fetchStockHistory } from "../services/stockApi";
+import { fetchStockHistory } from "../services/stockApi";
 import StockChart from "./stockChart";
 
 export default function StockQuote({ symbol }) {
@@ -13,10 +13,26 @@ export default function StockQuote({ symbol }) {
     setHistory(null);
     setError(null);
 
-    Promise.all([fetchStockQuote(symbol), fetchStockHistory(symbol)])
-      .then(([quoteData, historyData]) => {
-        setQuote(quoteData);
+    fetchStockHistory(symbol)
+      .then((historyData) => {
         setHistory(historyData);
+
+        const series = historyData.series;
+        if (series && series.length >= 2) {
+          // series is reverse-chronological (latest first)
+          const latest = series[0].price;
+          const previous = series[1].price;
+
+          const change = latest - previous;
+          const changePercent = (change / previous) * 100;
+
+          setQuote({
+            symbol: historyData.symbol ?? symbol,
+            price: latest,
+            change,
+            changePercent,
+          });
+        }
       })
       .catch((err) => setError(err.message));
   }, [symbol]);
@@ -76,7 +92,7 @@ export default function StockQuote({ symbol }) {
               fontSize: "0.9rem",
             }}
           >
-            ⚠ Live market data unavailable. Showing demo data.
+            ⚠ Live market data unavailable. howing demo data.
           </div>
         )}
 
