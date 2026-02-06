@@ -304,7 +304,6 @@ market_service_get_history(const char *symbol)
         int rc = alpha_vantage_get_daily_history_json(
             symbol, json, sizeof(json)
         );
-        printf("alpha_vantage rc=%d\n", rc); // temporary logging
 
         if (rc == 0) {
             history_cache_set(symbol, json);

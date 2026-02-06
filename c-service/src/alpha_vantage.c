@@ -32,6 +32,25 @@ static int parse_percent(const char *s, double *out)
     return 0;
 }
 
+static void log_api_call(const char *endpoint, const char *symbol)
+{
+    fprintf(stderr,
+        "[alpha_vantage] API call: %s (symbol=%s)\n",
+        endpoint,
+        symbol
+    );
+}
+
+static void log_api_message(const char *endpoint, const char *type, const char *msg)
+{
+    fprintf(stderr,
+        "[alpha_vantage] %s response (%s): %s\n",
+        endpoint,
+        type,
+        msg
+    );
+}
+
 
 // ------------------------------------------------------------
 // Quote
@@ -45,6 +64,8 @@ int alpha_vantage_get_quote(const char *symbol, struct stock_quote *out)
     const char *api_key = get_api_key();
     if (!api_key)
         return -2;
+
+    log_api_call("GLOBAL_QUOTE", symbol);
 
     char url[512];
     snprintf(
@@ -68,16 +89,22 @@ int alpha_vantage_get_quote(const char *symbol, struct stock_quote *out)
 
     yyjson_val *root = yyjson_doc_get_root(doc);
 
-    // Alpha Vantage error / rate-limit responses
-    if (yyjson_obj_get(root, "Note") ||
-        yyjson_obj_get(root, "Error Message") ||
-        yyjson_obj_get(root, "Information")) {
+    yyjson_val *note = yyjson_obj_get(root, "Note");
+    yyjson_val *err  = yyjson_obj_get(root, "Error Message");
+    yyjson_val *info = yyjson_obj_get(root, "Information");
+
+    if (note || err || info) {
+        const char *msg =
+            note ? yyjson_get_str(note) :
+            err  ? yyjson_get_str(err)  :
+                   yyjson_get_str(info);
+
+        log_api_message("GLOBAL_QUOTE", "info/error", msg ? msg : "(no message)");
         yyjson_doc_free(doc);
-        return -100; // upstream temporary failure
+        return -100;
     }
 
     yyjson_val *quote = yyjson_obj_get(root, "Global Quote");
-
     if (!quote) {
         yyjson_doc_free(doc);
         return -5;
@@ -122,11 +149,13 @@ int alpha_vantage_get_daily_history_json(
     if (!api_key)
         return -2;
 
+    log_api_call("TIME_SERIES_DAILY_ADJUSTED", symbol);
+
     char url[512];
     snprintf(
         url, sizeof(url),
         "https://www.alphavantage.co/query"
-        "?function=TIME_SERIES_DAILY_ADJUSTED"
+        "?function=TIME_SERIES_DAILY" //ADJUSTED is premium only, but we only need close price so regular is fine
         "&symbol=%s"
         "&apikey=%s",
         symbol, api_key
@@ -144,12 +173,24 @@ int alpha_vantage_get_daily_history_json(
 
     yyjson_val *root = yyjson_doc_get_root(doc);
 
-    // Alpha Vantage error / rate-limit responses
-    if (yyjson_obj_get(root, "Note") ||
-        yyjson_obj_get(root, "Error Message") ||
-        yyjson_obj_get(root, "Information")) {
+    yyjson_val *note = yyjson_obj_get(root, "Note");
+    yyjson_val *err  = yyjson_obj_get(root, "Error Message");
+    yyjson_val *info = yyjson_obj_get(root, "Information");
+
+    if (note || err || info) {
+        const char *msg =
+            note ? yyjson_get_str(note) :
+            err  ? yyjson_get_str(err)  :
+                   yyjson_get_str(info);
+
+        log_api_message(
+            "TIME_SERIES_DAILY_ADJUSTED",
+            "info/error",
+            msg ? msg : "(no message)"
+        );
+
         yyjson_doc_free(doc);
-        return -100; // upstream temporary failure
+        return -100;
     }
 
     yyjson_val *series =
@@ -182,7 +223,7 @@ int alpha_vantage_get_daily_history_json(
     {
         const char *date = yyjson_get_str(key);
         yyjson_val *close =
-            yyjson_obj_get(val, "5. adjusted close");
+            yyjson_obj_get(val, "4. close");
 
         if (!date || !close)
             continue;
