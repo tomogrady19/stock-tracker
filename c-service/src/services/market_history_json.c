@@ -8,8 +8,6 @@
 char *
 market_build_history_with_metrics(const char *history_json, int days)
 {
-    (void)days; /* currently unused, but will be used soon */
-
     if (!history_json)
         return NULL;
 
@@ -26,27 +24,51 @@ market_build_history_with_metrics(const char *history_json, int days)
         return NULL;
     }
 
-    size_t count = yyjson_arr_size(series);
-    if (count < 2) {
+    size_t total_count = yyjson_arr_size(series);
+    if (total_count < 2) {
         yyjson_doc_free(doc);
         return strdup(history_json);
     }
 
-    double *prices = malloc(sizeof(double) * count);
+    // ------------------------------------------------------------
+    // Determine slice window
+    // ------------------------------------------------------------
+
+    size_t slice_count = total_count;
+
+    if (days > 0 && (size_t)days < total_count) {
+        slice_count = (size_t)days;
+    }
+
+    // ------------------------------------------------------------
+    // Build chronological price array (slice only)
+    // series is reverse-chronological
+    // ------------------------------------------------------------
+
+    double *prices = malloc(sizeof(double) * slice_count);
     if (!prices) {
         yyjson_doc_free(doc);
         return NULL;
     }
 
-    /* series is reverse-chronological → convert to chronological */
-    for (size_t i = 0; i < count; i++) {
-        yyjson_val *item = yyjson_arr_get(series, count - 1 - i);
+    // We want last N chronological entries
+    // Chronological index i maps to:
+    // reverse_index = total_count - 1 - i
+    // We take the last slice_count chronological entries
+
+    size_t chrono_start = total_count - slice_count;
+
+    for (size_t i = 0; i < slice_count; i++) {
+        size_t chrono_index = chrono_start + i;
+        size_t reverse_index = total_count - 1 - chrono_index;
+
+        yyjson_val *item = yyjson_arr_get(series, reverse_index);
         yyjson_val *price = yyjson_obj_get(item, "price");
         prices[i] = yyjson_get_real(price);
     }
 
     struct market_metrics metrics;
-    if (market_calculate_metrics(prices, count, &metrics) != 0) {
+    if (market_calculate_metrics(prices, slice_count, &metrics) != 0) {
         free(prices);
         yyjson_doc_free(doc);
         return NULL;
@@ -54,7 +76,10 @@ market_build_history_with_metrics(const char *history_json, int days)
 
     free(prices);
 
-    /* Build new JSON */
+    // ------------------------------------------------------------
+    // Build new JSON
+    // ------------------------------------------------------------
+
     yyjson_mut_doc *mut = yyjson_mut_doc_new(NULL);
     yyjson_mut_val *mut_root = yyjson_mut_obj(mut);
     yyjson_mut_doc_set_root(mut, mut_root);
@@ -71,8 +96,13 @@ market_build_history_with_metrics(const char *history_json, int days)
     yyjson_mut_val *mut_series =
         yyjson_mut_obj_add_arr(mut, mut_root, "series");
 
-    for (size_t i = 0; i < yyjson_arr_size(series); i++) {
-        yyjson_val *item = yyjson_arr_get(series, i);
+    // Output must remain reverse-chronological
+    for (size_t i = 0; i < slice_count; i++) {
+        size_t reverse_index = i;
+
+        yyjson_val *item =
+            yyjson_arr_get(series, reverse_index);
+
         yyjson_val *date = yyjson_obj_get(item, "date");
         yyjson_val *price = yyjson_obj_get(item, "price");
 
