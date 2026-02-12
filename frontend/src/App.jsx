@@ -35,9 +35,9 @@ export default function App() {
           onChange={(e) => setDays(Number(e.target.value))}
           style={{ marginRight: "0.5rem" }}
         >
-          <option value={5}>5D</option>
-          <option value={30}>1M</option>
-          <option value={90}>3M</option>
+          <option value={5}>5 days</option>
+          <option value={30}>1 month</option>
+          <option value={90}>3 months</option>
           <option value={100}>Full</option>
         </select>
 
