@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { fetchStockHistory } from "../services/stockApi";
 import StockChart from "./stockChart";
 
-export default function StockQuote({ symbol }) {
+export default function StockQuote({ symbol, days }) {
   const [quote, setQuote] = useState(null);
   const [history, setHistory] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // reset state when symbol changes
+    // reset state when symbol or days changes
     setQuote(null);
     setHistory(null);
     setError(null);
 
-    fetchStockHistory(symbol)
+    fetchStockHistory(symbol, days)
       .then((historyData) => {
         setHistory(historyData);
 
@@ -35,7 +35,7 @@ export default function StockQuote({ symbol }) {
         }
       })
       .catch((err) => setError(err.message));
-  }, [symbol]);
+  }, [symbol, days]); // <-- important
 
   if (error) {
     return <p style={{ color: "red" }}>Error: {error}</p>;

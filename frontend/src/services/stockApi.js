@@ -11,8 +11,8 @@ export async function fetchStockQuote(symbol) {
   return res.json();
 }
 
-export async function fetchStockHistory(symbol) {
-  const url = `${BASE_URL}/api/market/history?symbol=${symbol}`;
+export async function fetchStockHistory(symbol, days = 0) {
+  const url = `${BASE_URL}/api/market/history?symbol=${symbol}&days=${days}`;
 
   const res = await fetch(url);
   if (!res.ok) {
