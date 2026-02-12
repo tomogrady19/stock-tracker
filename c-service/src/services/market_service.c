@@ -43,7 +43,7 @@ static int extract_latest_quote(const char *history_json,
 // ============================================================
 
 struct market_history_result
-market_service_get_history(const char *symbol)
+market_service_get_history(const char *symbol, int days)
 {
     struct market_history_result result;
     result.json = NULL;
@@ -90,7 +90,7 @@ market_service_get_history(const char *symbol)
         result.fetched_at = time(NULL);
     }
 
-    result.json = market_build_history_with_metrics(raw);
+    result.json = market_build_history_with_metrics(raw, days);
     return result;
 }
 
@@ -102,7 +102,7 @@ int market_service_get_quote(const char *symbol,
         return -1;
 
     struct market_history_result res =
-        market_service_get_history(symbol);
+        market_service_get_history(symbol, 0); /* days currently unused, but will be used soon */
 
     if (!res.json)
         return -1;

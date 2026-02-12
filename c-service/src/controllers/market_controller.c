@@ -55,10 +55,11 @@ int market_quote_controller(struct mg_connection *conn,
 
 
 int market_history_controller(struct mg_connection *conn,
-                              const char *symbol)
+                              const char *symbol,
+                              int days)
 {
     struct market_history_result res =
-        market_service_get_history(symbol);
+        market_service_get_history(symbol, days);
 
     const char *source_str = source_to_string(res.source);
 
@@ -89,7 +90,7 @@ int market_history_controller(struct mg_connection *conn,
     const char *inner = res.json;
 
     if (inner && inner[0] == '{')
-        inner++;  // skip leading '{'
+        inner++;
 
     mg_printf(conn,
         "\r\n"

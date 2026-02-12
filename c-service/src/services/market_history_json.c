@@ -6,8 +6,10 @@
 #include "yyjson.h"
 
 char *
-market_build_history_with_metrics(const char *history_json)
+market_build_history_with_metrics(const char *history_json, int days)
 {
+    (void)days; /* currently unused, but will be used soon */
+
     if (!history_json)
         return NULL;
 

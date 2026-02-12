@@ -26,7 +26,7 @@ struct market_history_result {
  * Returns history + metadata
  */
 struct market_history_result
-market_service_get_history(const char *symbol);
+market_service_get_history(const char *symbol, int days);
 
 /*
  * Quote logic stays the same externally

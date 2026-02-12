@@ -13,5 +13,6 @@
  * Returns NULL on failure.
  */
 char *market_build_history_with_metrics(
-    const char *history_json
+    const char *history_json,
+    int days
 );

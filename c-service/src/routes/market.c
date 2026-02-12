@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "civetweb.h"
 #include "../controllers/market_controller.h"
@@ -24,6 +25,26 @@ static int extract_symbol_param(const struct mg_request_info *req,
                out_size);
 
     return strlen(out) > 0;
+}
+
+static int extract_days_param(const struct mg_request_info *req)
+{
+    if (!req->query_string)
+        return 0;
+
+    char buf[16] = {0};
+
+    mg_get_var(req->query_string,
+               strlen(req->query_string),
+               "days",
+               buf,
+               sizeof(buf));
+
+    if (strlen(buf) == 0)
+        return 0;
+
+    int days = atoi(buf);
+    return days > 0 ? days : 0;
 }
 
 
@@ -60,7 +81,9 @@ static int handle_market_history(struct mg_connection *conn, void *cbdata)
         return 1;
     }
 
-    return market_history_controller(conn, symbol);
+    int days = extract_days_param(req);
+
+    return market_history_controller(conn, symbol, days);
 }
 
 

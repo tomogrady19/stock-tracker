@@ -13,6 +13,7 @@ int market_quote_controller(struct mg_connection *conn,
                             const char *symbol);
 
 int market_history_controller(struct mg_connection *conn,
-                              const char *symbol);
+                            const char *symbol,
+                            int days);
 
 #endif
