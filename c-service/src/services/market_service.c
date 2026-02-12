@@ -102,7 +102,7 @@ int market_service_get_quote(const char *symbol,
         return -1;
 
     struct market_history_result res =
-        market_service_get_history(symbol, 0); /* days currently unused, but will be used soon */
+        market_service_get_history(symbol, 0); /* days==0 ensures full window is used */
 
     if (!res.json)
         return -1;
