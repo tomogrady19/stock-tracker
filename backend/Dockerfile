@@ -18,9 +18,12 @@ WORKDIR /app
 # Copy entire backend source
 COPY . .
 
+# Ensure no stale build directory exists
+RUN rm -rf build
+
 # Build
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build --config Release
+    && cmake --build build
 
 
 # ============================
