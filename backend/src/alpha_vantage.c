@@ -16,7 +16,15 @@
 
 static const char *get_api_key(void)
 {
-    return getenv("STOCKC_ALPHA_VANTAGE_KEY");
+    const char *key = getenv("ALPHAVANTAGE_API_KEY");
+
+    if (!key || strlen(key) == 0) {
+        fprintf(stderr,
+            "[alpha_vantage] ERROR: ALPHAVANTAGE_API_KEY not set\n");
+        return NULL;
+    }
+
+    return key;
 }
 
 static int parse_percent(const char *s, double *out)
@@ -155,7 +163,7 @@ int alpha_vantage_get_daily_history_json(
     snprintf(
         url, sizeof(url),
         "https://www.alphavantage.co/query"
-        "?function=TIME_SERIES_DAILY" //ADJUSTED is premium only, but we only need close price so regular is fine
+        "?function=TIME_SERIES_DAILY"
         "&symbol=%s"
         "&apikey=%s",
         symbol, api_key
