@@ -1,0 +1,9 @@
+build
+.git
+.gitignore
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.vcxproj*
+.vs
