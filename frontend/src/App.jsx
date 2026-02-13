@@ -1,5 +1,5 @@
 import { useState } from "react";
-import StockQuote from "./components/StockQuote";
+import StockQuote from "./components/stockQuote";
 import "./App.css";
 
 export default function App() {
