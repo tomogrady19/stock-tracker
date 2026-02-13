@@ -1,9 +1,10 @@
 #include <string.h>
-#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "market_controller.h"
 #include "../services/market_service.h"
-#include "../http/cors.h"
+#include "../http/responses.h"
 #include "stockc/market.h"
 
 
@@ -31,13 +32,9 @@ int market_quote_controller(struct mg_connection *conn,
         strncpy(q.symbol, symbol, sizeof(q.symbol) - 1);
     }
 
-    mg_printf(conn,
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json\r\n"
-    );
-    add_cors_headers(conn);
-    mg_printf(conn,
-        "\r\n"
+    char json[512];
+
+    snprintf(json, sizeof(json),
         "{"
           "\"symbol\":\"%s\","
           "\"price\":%.2f,"
@@ -50,6 +47,7 @@ int market_quote_controller(struct mg_connection *conn,
         q.change_percent
     );
 
+    send_json_response(conn, 200, json);
     return 1;
 }
 
@@ -63,37 +61,21 @@ int market_history_controller(struct mg_connection *conn,
 
     const char *source_str = source_to_string(res.source);
 
-    mg_printf(conn,
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json\r\n"
-    );
-    add_cors_headers(conn);
-
-    /*
-     * We wrap the original history JSON inside a new object
-     * so the frontend can see:
-     *   - source: "live" | "cache" | "demo"
-     *   - fetchedAt: unix timestamp
-     *
-     * Result shape:
-     * {
-     *   "symbol": "AAPL",
-     *   "source": "cache",
-     *   "fetchedAt": 1707152030,
-     *   "series": [...]
-     * }
-     *
-     * We achieve this by removing the leading '{' from the
-     * original JSON and prepending our own fields.
-     */
-
     const char *inner = res.json;
 
     if (inner && inner[0] == '{')
         inner++;
 
-    mg_printf(conn,
-        "\r\n"
+    size_t needed = strlen(inner ? inner : "\"series\":[]}")
+                    + 256;
+
+    char *json = malloc(needed);
+    if (!json) {
+        send_json_error(conn, 500, "memory allocation failed");
+        return 1;
+    }
+
+    snprintf(json, needed,
         "{"
           "\"source\":\"%s\","
           "\"fetchedAt\":%lld,"
@@ -103,5 +85,8 @@ int market_history_controller(struct mg_connection *conn,
         inner ? inner : "\"series\":[]}"
     );
 
+    send_json_response(conn, 200, json);
+
+    free(json);
     return 1;
 }
