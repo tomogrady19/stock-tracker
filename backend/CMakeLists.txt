@@ -35,4 +35,5 @@ target_link_libraries(stockc
     civetweb-c-library
     yyjson
     CURL::libcurl
+    m
 )
