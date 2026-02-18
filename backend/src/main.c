@@ -9,11 +9,7 @@ int main(void)
     printf("Starting stockc backend...\n");
 
     const char *port_env = getenv("PORT");
-    int port = 8080;  // default for local development
-
-    if (port_env && strlen(port_env) > 0) {
-        port = atoi(port_env);
-    }
+    int port = port_env ? atoi(port_env) : 8080; // Default to 8080 if PORT is not set
 
     printf("Listening on port %d\n", port);
 
