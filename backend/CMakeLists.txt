@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(stockc LANGUAGES C)
 
-add_compile_options(-Wall -Wextra -Werror)
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
