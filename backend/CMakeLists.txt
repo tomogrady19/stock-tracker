@@ -25,6 +25,15 @@ add_executable(stockc
     src/http/responses.c
 )
 
+target_compile_features(stockc PRIVATE c_std_11)
+
+target_compile_options(stockc PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+)
+
 target_include_directories(stockc PRIVATE
     include
     third_party/civetweb/include
