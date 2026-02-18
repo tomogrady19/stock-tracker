@@ -4,6 +4,7 @@
 #include "civetweb.h"
 #include "stockc/http.h"
 #include "stockc/market.h"
+#include "stockc/routes.h"
 
 #ifdef _WIN32
 #include <windows.h>
