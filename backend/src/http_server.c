@@ -20,7 +20,7 @@
 static void add_cors_headers(struct mg_connection *conn)
 {
     mg_printf(conn,
-        "Access-Control-Allow-Origin: http://localhost:5173\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
         "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
         "Access-Control-Allow-Headers: Content-Type\r\n"
         "Access-Control-Max-Age: 86400\r\n"
@@ -30,12 +30,21 @@ static void add_cors_headers(struct mg_connection *conn)
 static int options_handler(struct mg_connection *conn, void *cbdata)
 {
     (void)cbdata; // Unused parameter but still needed for the handler signature
+
+    const struct mg_request_info *req_info = mg_get_request_info(conn);
+
+    if (strcmp(req_info->request_method, "OPTIONS") != 0) {
+        return 0; // Let other handlers process the request
+    }
+
     mg_printf(conn,
         "HTTP/1.1 204 No Content\r\n"
         "Connection: close\r\n"
     );
+
     add_cors_headers(conn);
     mg_printf(conn, "\r\n");
+
     return 1;
 }
 
