@@ -54,6 +54,7 @@ static int extract_days_param(const struct mg_request_info *req)
 
 static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 {
+    (void)cbdata; // Unused parameter but still needed for the handler signature
     const struct mg_request_info *req = mg_get_request_info(conn);
 
     if (handle_options_preflight(conn, req))
@@ -70,6 +71,7 @@ static int handle_market_quote(struct mg_connection *conn, void *cbdata)
 
 static int handle_market_history(struct mg_connection *conn, void *cbdata)
 {
+    (void)cbdata; // Unused parameter but still needed for the handler signature
     const struct mg_request_info *req = mg_get_request_info(conn);
 
     if (handle_options_preflight(conn, req))
