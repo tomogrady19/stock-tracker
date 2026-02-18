@@ -28,6 +28,7 @@ static void add_cors_headers(struct mg_connection *conn)
 
 static int options_handler(struct mg_connection *conn, void *cbdata)
 {
+    (void)cbdata; // Unused parameter but still needed for the handler signature
     mg_printf(conn,
         "HTTP/1.1 204 No Content\r\n"
         "Connection: close\r\n"
@@ -42,6 +43,7 @@ static int options_handler(struct mg_connection *conn, void *cbdata)
 
 static int health_handler(struct mg_connection *conn, void *cbdata)
 {
+    (void)cbdata; // Unused parameter but still needed for the handler signature
     const char *response =
         "{"
         "\"status\":\"ok\","
