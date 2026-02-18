@@ -22,9 +22,9 @@ COPY . .
 RUN rm -rf build
 
 # Build
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+RUN cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build
-
 
 # ============================
 # Stage 2 — Runtime
