@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include "stockc/market.h"
 
 #ifdef __cplusplus
