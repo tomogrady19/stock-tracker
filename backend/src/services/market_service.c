@@ -8,6 +8,7 @@
 #include "stockc/market_metrics.h"
 #include "stockc/market_history_json.h"
 #include "stockc/market_demo_data.h"
+#include "stockc/alpha_vantage.h"
 #include "../cache/history_cache.h"
 
 #include "yyjson.h"
