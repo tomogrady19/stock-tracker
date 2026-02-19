@@ -1,3 +1,6 @@
+// Starts the HTTP server using CivetWeb and keeps it running in a loop. 
+// Registers the routes (includes health endpoint and CORS)
+
 #include <stdio.h>
 #include <string.h>
 
