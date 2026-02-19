@@ -9,6 +9,7 @@ struct mem_buf {
     size_t len;
 };
 
+// Callback for libcurl to write response data into a memory buffer
 static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsz = size * nmemb;
     struct mem_buf *mem = (struct mem_buf *)userp;
@@ -24,10 +25,12 @@ static size_t write_cb(void *contents, size_t size, size_t nmemb, void *userp) {
     return realsz;
 }
 
+// Returns 0 on success, non-zero on failure. Caller must free body with http_response_free().
 int http_get(const char *url, long timeout_ms, struct http_response *out) {
     if (!url || !out) return 1;
     memset(out, 0, sizeof(*out));
 
+    // Initialize libcurl globally (only once)
     static int curl_initialized = 0;
     if (!curl_initialized) {
         if (curl_global_init(CURL_GLOBAL_DEFAULT) != 0)
@@ -35,11 +38,13 @@ int http_get(const char *url, long timeout_ms, struct http_response *out) {
         curl_initialized = 1;
     }
 
+    // Create a new CURL handle for this request
     CURL *curl = curl_easy_init();
     if (!curl) return 3;
 
     struct mem_buf mem = {0};
 
+    // Set CURL options
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &mem);
@@ -47,6 +52,7 @@ int http_get(const char *url, long timeout_ms, struct http_response *out) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "stockc/1.0");
 
+    // Perform the request
     CURLcode rc = curl_easy_perform(curl);
     if (rc != CURLE_OK) {
         curl_easy_cleanup(curl);
@@ -54,11 +60,14 @@ int http_get(const char *url, long timeout_ms, struct http_response *out) {
         return 4;
     }
 
+    // Get HTTP status code
     long status = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
 
+    // Cleanup CURL handle but keep the response data for the caller
     curl_easy_cleanup(curl);
 
+    // Fill the output struct
     out->status = status;
     out->body = mem.ptr;
     out->size = mem.len;
