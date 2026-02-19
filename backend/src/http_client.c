@@ -1,3 +1,5 @@
+// Isolates libcurl from the rest of the codebase and provides a simple interface for making HTTP requests.
+
 #include "stockc/http_client.h"
 
 #include <stdlib.h>
