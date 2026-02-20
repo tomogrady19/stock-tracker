@@ -39,3 +39,8 @@ The backend is implemented in C, which also computes financial metrics. React fr
 - `GET /api/market/history?symbol=AAPL&days=30`
 - `GET /api/market/quote?symbol=AAPL`
 - `GET /health`
+
+## Deployment
+- Containerised with Docker
+- Image pushed to AWS ECR
+- Deployed to Elastic Beanstalk (Docker platform)
