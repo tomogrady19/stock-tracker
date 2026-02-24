@@ -40,3 +40,22 @@
 .read-the-docs {
   color: #888;
 }
+
+.load-button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.load-button:hover {
+  background-color: #1d4ed8;
+}
+
+.load-button:active {
+  transform: translateY(1px);
+}

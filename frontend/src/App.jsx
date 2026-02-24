@@ -41,7 +41,7 @@ export default function App() {
             <option value={100}>Full</option>
           </select>
 
-          <button type="submit">Load</button>
+          <button type="submit" className="load-button">Load</button>
         </form>
 
         <StockQuote symbol={activeSymbol} days={days} />
