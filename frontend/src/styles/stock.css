@@ -4,6 +4,8 @@
 }
 
 .stock-card {
+  display: flex;
+  gap: 20px;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 1rem;
@@ -19,4 +21,15 @@
 
 .stock-card p {
   margin: 0.5rem 0;
+}
+
+.stock-card > div {
+  min-width: 0;
+}
+
+/* vertical layout for smaller screens */
+@media (max-width: 768px) {
+  .stock-card {
+    flex-direction: column;
+  }
 }

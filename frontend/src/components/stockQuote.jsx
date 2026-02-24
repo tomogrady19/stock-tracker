@@ -69,7 +69,7 @@ export default function StockQuote({ symbol, days }) {
   }
 
   return (
-    <div className="stock-card" style={{ display: "flex", gap: "20px" }}>
+    <div className="stock-card">
       <div style={{ flex: 2 }}>
         <StockChart
           series={history.series}
