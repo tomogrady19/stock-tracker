@@ -27,9 +27,12 @@
   min-width: 0;
 }
 
-/* vertical layout for smaller screens */
+/* vertical layout and less padding for smaller screens */
 @media (max-width: 768px) {
   .stock-card {
     flex-direction: column;
+  }
+  .app {
+    padding: 1.2rem;
   }
 }
